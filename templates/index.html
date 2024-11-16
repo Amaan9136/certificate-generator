@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Generator</title>
+    <style>
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        button {
+            margin: 10px 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        #preview {
+            margin-top: 20px;
+            display: none;
+        }
+        #preview img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Certificate Generator</h1>
+    <form id="certificateForm" method="POST" action="/generate" onsubmit="submitJSON(event)">
+        <label for="jsonData">Enter Certificate Details (JSON):</label>
+        <textarea id="jsonData" name="jsonData" required>
+{
+    "name": "Amaan Mohammad Khalander",
+    "text_color": "#c6e000",
+    "font_weight": "4",
+    "font_style": "HERSHEY_SCRIPT_SIMPLEX",
+    "text_x": "560",
+    "text_y": "740"
+}
+        </textarea><br>
+
+        <input type="file" id="templateUpload" accept="image/png" onchange="uploadTemplate(event)">
+        <br>
+
+        <button type="submit">Generate Certificate</button>
+        <button type="button" onclick="createTemplate()">Create a Template</button>
+        <button type="button" onclick="previewCertificate()">Preview Certificate</button>
+    </form>
+
+    <div id="preview">
+        <h2>Certificate Preview:</h2>
+        <img id="previewImage" src="" alt="Certificate Preview">
+    </div>
+
+    <script>
+        function submitJSON(event) {
+            event.preventDefault();
+            const jsonData = document.getElementById('jsonData').value;
+
+            fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'certificate.png';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(console.error);
+        }
+
+        function createTemplate() {
+            const template = {
+                name: "Your Name Here",
+                text_color: "#000000",
+                font_weight: "2",
+                font_style: "HERSHEY_SIMPLEX",
+                text_x: "100",
+                text_y: "100"
+            };
+            document.getElementById('jsonData').value = JSON.stringify(template, null, 4);
+            alert("Template Created. Modify the fields as needed.");
+        }
+
+        function uploadTemplate(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                fetch('/upload_template', { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(alert)
+                .catch(console.error);
+            }
+        }
+
+        function previewCertificate() {
+            const jsonData = document.getElementById('jsonData').value;
+
+            fetch('/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const previewDiv = document.getElementById('preview');
+                const previewImg = document.getElementById('previewImage');
+                previewImg.src = data.image;
+                previewDiv.style.display = 'block';
+            })
+            .catch(console.error);
+        }
+    </script>
+</body>
+</html>

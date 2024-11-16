@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Certificate Position</title>
+    <style>
+        #preview {
+            margin: 20px 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        #selected_values {
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <script>
+        async function previewCertificate(event) {
+            event.preventDefault(); // Prevent form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+
+            // Display selected values
+            const selectedValues = {
+                name: formData.get('name'),
+                text_color: formData.get('text_color'),
+                font_weight: formData.get('font_weight'),
+                font_style: formData.get('font_style'),
+                text_x: formData.get('text_x'),
+                text_y: formData.get('text_y'),
+            };
+            document.getElementById('selected_values').innerText = JSON.stringify(selectedValues, null, 2);
+
+            // Send form data to the preview endpoint
+            const response = await fetch('/preview', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const imgData = await response.text();
+                const img = document.getElementById('certificate_img');
+                img.src = imgData; // Set the base64 image as the src of the preview image
+            } else {
+                alert('Failed to preview the certificate. Please try again.');
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Customize Certificate</h1>
+    <form method="POST" onsubmit="previewCertificate(event)">
+        <label for="name">Enter Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="text_color">Select Text Color:</label>
+        <input type="color" id="text_color" name="text_color" value="#000000"><br><br>
+
+        <label for="font_weight">Font Weight:</label>
+        <select id="font_weight" name="font_weight">
+            <option value="1">Thin</option>
+            <option value="2">Light</option>
+            <option value="4">Normal</option>
+            <option value="6">Semi-Bold</option>
+            <option value="8">Bold</option>
+            <option value="10">Extra Bold</option>
+        </select><br><br>
+
+        <label for="font_style">Font Style:</label>
+        <select id="font_style" name="font_style">
+            <option value="HERSHEY_SIMPLEX">Simplex</option>
+            <option value="HERSHEY_COMPLEX">Complex</option>
+            <option value="HERSHEY_TRIPLEX">Triplex</option>
+            <option value="HERSHEY_SCRIPT_SIMPLEX">Script Simplex</option>
+            <option value="HERSHEY_SCRIPT_COMPLEX">Script Complex</option>
+        </select><br><br>
+
+        <label for="text_x">Text X Position:</label>
+        <input type="number" id="text_x" name="text_x" required><br><br>
+
+        <label for="text_y">Text Y Position:</label>
+        <input type="number" id="text_y" name="text_y" required><br><br>
+
+        <button type="submit">Preview Certificate</button>
+    </form>
+
+    <div id="selected_values">
+        <h2>Selected Values:</h2>
+        <pre id="selected_values"></pre>
+    </div>
+
+    <div id="preview">
+        <h2>Certificate Preview:</h2>
+        <img id="certificate_img" src="" alt="Certificate Preview">
+    </div>
+</body>
+</html>
